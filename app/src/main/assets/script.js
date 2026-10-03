@@ -1,3 +1,0 @@
-function asd() {
-    alert("NIGGERS");
-}

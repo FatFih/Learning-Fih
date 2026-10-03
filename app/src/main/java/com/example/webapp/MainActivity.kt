@@ -51,6 +51,7 @@ class MainActivity : ComponentActivity() {
             domStorageEnabled = true      // localStorage / sessionStorage
             allowFileAccess = false
         }
+        webView.addJavascriptInterface(WebAppInterface(this, webView), "Android")
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(
@@ -82,7 +83,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState)
         } else {
-            webView.loadUrl("https://$host/assets/index.html")
+            webView.loadUrl("https://$host/assets/login-page/login.html")
         }
     }
 
