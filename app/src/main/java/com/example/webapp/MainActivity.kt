@@ -8,9 +8,11 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.webkit.WebViewAssetLoader
 
@@ -36,13 +38,30 @@ class MainActivity : ComponentActivity() {
             WebView.setWebContentsDebuggingEnabled(true)
         }
 
-        webView = WebView(this)
-        setContentView(webView)
+        // Same edge-to-edge behaviour on every Android version (Android 15 forces it anyway),
+        // so the keyboard handling below works the same everywhere
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // Keep content out from under the status/navigation bars
-        ViewCompat.setOnApplyWindowInsetsListener(webView) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+        webView = WebView(this)
+        val root = FrameLayout(this)
+        root.setBackgroundColor(0xFF050505.toInt()) // matches the page background
+        root.addView(
+            webView,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        )
+        setContentView(root)
+
+        // Keep content out from under the system bars AND above the on-screen keyboard.
+        // The padding goes on the container (not the WebView), so the WebView really shrinks
+        // when the keyboard opens - that is what lets the page scroll the focused field into view.
+        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
+            val space = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
+            )
+            v.setPadding(space.left, space.top, space.right, space.bottom)
             insets
         }
 
