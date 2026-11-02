@@ -13,18 +13,20 @@ object AuthRepository {
             PasswordUtil.createDigest(password)
         }
         return dao.insert(
-            User(normalizedUsername, digest.salt, digest.hash)
+            User(normalizedUsername, username.trim(), digest.salt, digest.hash)
         ) != -1L
     }
 
-    suspend fun login(dao: UserDao, username: String, password: String): Boolean {
+    // Returns the user on success, null on a wrong username or password
+    suspend fun login(dao: UserDao, username: String, password: String): User? {
         val normalizedUsername = normalizeUsername(username)
-        if (normalizedUsername.isBlank() || password.isEmpty()) return false
+        if (normalizedUsername.isBlank() || password.isEmpty()) return null
 
-        val user = dao.findByUsername(normalizedUsername) ?: return false
-        return withContext(Dispatchers.Default) {
+        val user = dao.findByUsername(normalizedUsername) ?: return null
+        val valid = withContext(Dispatchers.Default) {
             PasswordUtil.verify(password, user.passwordSalt, user.passwordHash)
         }
+        return if (valid) user else null
     }
 
     fun normalizeUsername(username: String): String = username.trim().lowercase(Locale.ROOT)

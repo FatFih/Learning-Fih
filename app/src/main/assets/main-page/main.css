@@ -3,10 +3,55 @@ body {
     color: white;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     overflow: hidden;
+    margin: 0;
 }
 
 h1 {
     text-align: center;
+    margin: 0 20px 5px;
+}
+
+/* Welcome text + buttons in the exact middle of the screen */
+.center {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+button:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 3px;
+}
+
+/* Same button look as the login / registration pages.
+   There is no card here, so the width is capped and the buttons are centred */
+button {
+    display: block;
+    font: inherit;
+    background-color: transparent;
+    color: white;
+    border: 2px solid white;
+    border-radius: 6px;
+    padding: 10px 14px;
+    width: min(304px, calc(100vw - 40px));
+    cursor: pointer;
+    transition: background-color 150ms ease, color 150ms ease;
+    margin: 15px auto 0;
+}
+
+@media (hover: hover) {
+    button:hover {
+        background-color: white;
+        color: black;
+    }
+}
+
+button:active {
+    background-color: rgba(255, 255, 255, 0.85);
+    color: black;
 }
 
 /* From Uiverse.io by kiranmayee-abbireddy */ 

@@ -28,6 +28,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        NotificationHelper.createChannel(this)
+
         val assetLoader = WebViewAssetLoader.Builder()
             .setDomain(host)
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))

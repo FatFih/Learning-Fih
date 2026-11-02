@@ -355,3 +355,18 @@ button:active {
   .uiverse-midnight-sky .stars-2 { background-size: 210px 210px; }
   .uiverse-midnight-sky .stars-3 { background-size: 280px 280px; }
 }
+
+
+#registrationMessage {
+  text-align: right;
+  text-decoration: none;
+  color: white;
+  font-weight: bolder;
+}
+
+#registrationMessage:hover {
+  text-align: right;
+  text-decoration: none;
+  color: white;
+  font-weight: bolder;
+}

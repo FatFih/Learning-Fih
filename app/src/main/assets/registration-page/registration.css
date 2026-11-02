@@ -355,3 +355,17 @@ button:active {
   .uiverse-midnight-sky .stars-2 { background-size: 210px 210px; }
   .uiverse-midnight-sky .stars-3 { background-size: 280px 280px; }
 }
+
+#BejelentkezésMessage {
+  color: white;
+  text-decoration: none;
+  text-align: right;
+  font-weight: bolder;
+}
+
+#BejelentkezésMessage:hover {
+  color: white;
+  text-decoration: none;
+  text-align: right;
+  font-weight: bolder;
+}

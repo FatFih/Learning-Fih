@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="../shared/menu.css">
     <link rel="stylesheet" href="../catfish.css">
+    <script src="../shared/menu.js" defer></script>
     <script src="main.js" defer></script>
     <script src="../catfish.js" defer></script>
     <title>Dolgozat Naptár</title>
@@ -25,7 +27,36 @@
         </div>
     </div>
 
-    <h1 id="welcomeMessage">Dolgozat Naptár</h1>
-    <button id="logoutBtn" type="button">Kijelentkezés</button>
+    <!-- Top bar: the menu button sits on its left, the user on its right -->
+    <header class="navbar">
+        <div class="profile">
+            <span id="navUsername">Felhasználó</span>
+            <img class="avatar" src="../images/default-avatar.svg" alt="Profilkép">
+        </div>
+    </header>
+
+    <button class="menu-toggle" id="menuToggle" type="button"
+            aria-label="Menü" aria-expanded="false" aria-controls="sideMenu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <div class="menu-backdrop" id="menuBackdrop"></div>
+
+    <nav class="side-menu" id="sideMenu" aria-hidden="true">
+        <h2>Menü</h2>
+        <a href="../main-page/main.html" aria-current="page">Főoldal</a>
+        <a href="../calendar-page/calendar-page.html">Naptár</a>
+        <a href="#">Csoportok</a>
+        <a href="#">Beállítások</a>
+        <a href="#" data-action="logout">Kijelentkezés</a>
+    </nav>
+
+    <main class="center">
+        <h1 id="welcomeMessage">Learning-Fih</h1>
+        <button id="testBtn" type="button">Teszt</button>
+        <button type="button" data-action="logout">Kijelentkezés</button>
+    </main>
 </body>
 </html>
