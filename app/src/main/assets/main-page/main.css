@@ -11,7 +11,7 @@ h1 {
     margin: 0 20px 5px;
 }
 
-/* Welcome text + buttons in the exact middle of the screen */
+/* Welcome text + next exam in the exact middle of the screen */
 .center {
     min-height: 100vh;
     min-height: 100dvh;
@@ -19,6 +19,84 @@ h1 {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+/* ----- Next exam ----- */
+/* Same look as the cards on the other pages, with the exam red as the accent */
+.exam-card {
+    box-sizing: border-box;
+    width: min(360px, calc(100vw - 40px));
+    margin-top: 16px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: white;
+    text-decoration: none;
+
+    border: 2px solid #ff6b6b;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 18px rgba(255, 255, 255, 0.08);
+    background-color: rgba(30, 30, 30, 0.4);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(30px) saturate(180%);
+}
+
+.exam-card[hidden],
+.exam-card [hidden] {
+    display: none;
+}
+
+.exam-card:active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.exam-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.exam-label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.exam-countdown {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background-color: #ff6b6b;
+    color: black;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.exam-subject {
+    font-size: 1.4rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.exam-when {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.exam-details {
+    margin-top: 4px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.exam-more {
+    margin-top: 6px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.no-exam {
+    margin: 12px 0 0;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 button:focus-visible {

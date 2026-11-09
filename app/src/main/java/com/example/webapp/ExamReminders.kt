@@ -14,10 +14,9 @@ import java.util.concurrent.TimeUnit
 // then "2 Nap múlva...", then "1 Nap múlva...". Nothing on the exam day itself.
 // WorkManager keeps the timers through phone restarts.
 object ExamReminders {
-    // Reminders start this many days before the exam and go off at this hour every day
-    // (keep in sync with EXAM_REMINDER_* in calendar-page.js, which shows these times)
+    // Reminders start this many days before the exam and go off every day at the time
+    // set in Beállítások (AppSettings). Keep in sync with EXAM_REMINDER_DAYS in calendar-page.js.
     private const val DAYS_BEFORE = 3
-    private const val HOUR = 13
 
     private val MONTHS = arrayOf(
         "január", "február", "március", "április", "május", "június",
@@ -27,12 +26,13 @@ object ExamReminders {
     // One timer per day: exam_reminder_<exam id>_<days before>
     private fun workName(examId: Long, daysBefore: Int) = "exam_reminder_${examId}_$daysBefore"
 
-    // The moment of the reminder `daysBefore` days before the exam
-    private fun reminderTime(date: String, daysBefore: Int): Long {
+    // The moment of the reminder `daysBefore` days before the exam, at `time` ("HH:MM")
+    private fun reminderTime(date: String, daysBefore: Int, time: String): Long {
         val (year, month, day) = date.split("-").map { it.toInt() }
+        val (hour, minute) = time.split(":").map { it.toInt() }
         return Calendar.getInstance().apply {
             clear()
-            set(year, month - 1, day, HOUR, 0)
+            set(year, month - 1, day, hour, minute)
             add(Calendar.DAY_OF_MONTH, -daysBefore)
         }.timeInMillis
     }
@@ -42,8 +42,9 @@ object ExamReminders {
     fun schedule(context: Context, exam: Exam) {
         val workManager = WorkManager.getInstance(context)
         val now = System.currentTimeMillis()
+        val time = AppSettings.reminderTime(context)
         for (daysBefore in DAYS_BEFORE downTo 1) {
-            val at = reminderTime(exam.date, daysBefore)
+            val at = reminderTime(exam.date, daysBefore, time)
             if (at <= now) {
                 workManager.cancelUniqueWork(workName(exam.id, daysBefore))
                 continue
@@ -56,9 +57,9 @@ object ExamReminders {
         }
     }
 
-    // Sends the "3 Nap múlva" reminder right now, through the same worker as the real ones
-    fun sendTest(context: Context, examId: Long) {
-        WorkManager.getInstance(context).enqueue(request(examId, DAYS_BEFORE, 0))
+    // After the reminder time changes in Beállítások: every saved exam gets new timers
+    suspend fun rescheduleAll(context: Context) {
+        AppDatabase.get(context).timetableDao().allExams().forEach { schedule(context, it) }
     }
 
     private fun request(examId: Long, daysBefore: Int, delayMillis: Long) =

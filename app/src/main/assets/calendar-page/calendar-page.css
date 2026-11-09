@@ -16,7 +16,7 @@ body.modal-open {
     box-sizing: border-box;
     width: min(560px, 100%);
     margin: 0 auto;
-    padding: 90px 12px 24px;
+    padding: 90px 12px 98px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -544,13 +544,8 @@ textarea:focus-visible {
     outline-offset: 3px;
 }
 
-#addExam,
-#testExamNotification {
+#addExam {
     width: 100%;
-}
-
-#testExamNotification {
-    margin-top: 10px;
 }
 
 .btn.confirm {

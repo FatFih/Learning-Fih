@@ -156,8 +156,9 @@ body {
 /* The page you are on */
 .side-menu a[aria-current="page"] {
     font-weight: 700;
-    box-shadow: inset 3px 0 0 white;
+    box-shadow: inset 3px 0 0 currentColor;
 }
+
 
 /* ----- Dark backdrop behind the open menu ----- */
 .menu-backdrop {
@@ -174,6 +175,59 @@ body {
 .menu-backdrop.open {
     opacity: 1;
     pointer-events: auto;
+}
+
+/* ----- Bottom bar ----- */
+/* Same look as the top bar; switches between the main pages */
+.bottom-bar {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 5;
+    height: 64px;
+    box-sizing: border-box;
+    padding: 6px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+
+    border: 2px solid white;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 18px rgba(255, 255, 255, 0.08);
+    background-color: rgba(30, 30, 30, 0.4);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(30px) saturate(180%);
+}
+
+.bottom-bar a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border-radius: 10px;
+    color: white;
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: background-color 150ms ease, color 150ms ease;
+}
+
+.bottom-bar svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.bottom-bar a:active {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* The page you are on */
+.bottom-bar a[aria-current="page"] {
+    background-color: white;
+    color: black;
+    font-weight: 700;
 }
 
 /* ----- Catfish below the top bar ----- */

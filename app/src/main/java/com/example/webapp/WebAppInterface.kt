@@ -4,11 +4,13 @@ import android.Manifest
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -67,16 +69,6 @@ class WebAppInterface(
         prefs.edit().remove("logged_in_username").remove("logged_in_display_name").apply()
     }
 
-    @JavascriptInterface
-    fun testNotification() {
-        if (NotificationHelper.hasPermission(activity)) {
-            NotificationHelper.show(activity, 1, "Dolgozat Naptár", "Működik az értesítés")
-        } else {
-            // First tap asks for permission (Android 13+); tap again after allowing
-            requestNotificationPermission()
-        }
-    }
-
     private fun requestNotificationPermission() {
         if (NotificationHelper.hasPermission(activity) || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         activity.runOnUiThread {
@@ -89,7 +81,7 @@ class WebAppInterface(
     // ===== Timetable (calendar page) =====
 
     // Answers {"lessons": [{day, period, subject, room}], "fileCounts": {"subject key": n},
-    //          "exams": [{id, date, period, subject, details}]}
+    //          "exams": [{id, date, period, subject, details}], "reminderTime": "13:00"}
     @JavascriptInterface
     fun getTimetable(callId: String) {
         activity.lifecycleScope.launch {
@@ -119,7 +111,12 @@ class WebAppInterface(
             }
             sendJson(
                 callId,
-                JSONObject().put("lessons", lessons).put("fileCounts", counts).put("exams", exams).toString()
+                JSONObject()
+                    .put("lessons", lessons)
+                    .put("fileCounts", counts)
+                    .put("exams", exams)
+                    .put("reminderTime", AppSettings.reminderTime(activity))
+                    .toString()
             )
         }
     }
@@ -198,20 +195,34 @@ class WebAppInterface(
         }
     }
 
-    // Sends the exam's reminder right away. False (and asks for permission)
-    // if notifications aren't allowed yet.
+    // ===== Settings (Beállítások page) =====
+
+    // Answers {"reminderTime": "13:00"}
     @JavascriptInterface
-    fun testExamNotification(callId: String, examId: Long) {
+    fun getSettings(callId: String) {
+        sendJson(callId, JSONObject().put("reminderTime", AppSettings.reminderTime(activity)).toString())
+    }
+
+    // time = "HH:MM". Moves the reminders of every saved exam to the new time.
+    @JavascriptInterface
+    fun setReminderTime(callId: String, time: String) {
         activity.lifecycleScope.launch {
-            val user = currentUser() ?: return@launch sendResult(callId, false)
-            val exam = timetable.exam(examId)?.takeIf { it.username == user }
-                ?: return@launch sendResult(callId, false)
-            if (!NotificationHelper.hasPermission(activity)) {
-                requestNotificationPermission()
-                return@launch sendResult(callId, false)
+            val saved = AppSettings.setReminderTime(activity, time)
+            if (saved) ExamReminders.rescheduleAll(activity)
+            sendResult(callId, saved)
+        }
+    }
+
+    // Called by theme.js on every page: the status / navigation bar area follows the theme
+    // (dark icons on the light sky, light icons on the night sky)
+    @JavascriptInterface
+    fun setLightTheme(light: Boolean) {
+        activity.runOnUiThread {
+            (webView.parent as? View)?.setBackgroundColor(if (light) 0xFFBFE3FA.toInt() else 0xFF050505.toInt())
+            WindowCompat.getInsetsController(activity.window, activity.window.decorView).apply {
+                isAppearanceLightStatusBars = light
+                isAppearanceLightNavigationBars = light
             }
-            ExamReminders.sendTest(activity, exam.id)
-            sendResult(callId, true)
         }
     }
 

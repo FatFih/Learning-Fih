@@ -1,6 +1,6 @@
 // Weekly timetable (like Kréta): pick a day in the week strip to see its classes,
 // edit a day's classes, and attach files to subjects.
-// `inApp` comes from ../shared/menu.js
+// `inApp` and `callNative` come from ../shared/menu.js
 
 // When each class starts and ends (1st ... 9th)
 const PERIOD_TIMES = {
@@ -16,10 +16,10 @@ const PERIOD_TIMES = {
 };
 const LAST_PERIOD = 9;
 
-// Exam reminders go off every day from this many days before the exam, at this hour
-// (the Android side sets them; keep in sync with ExamReminders.kt)
+// Exam reminders go off every day from this many days before the exam
+// (the Android side sets them; keep in sync with ExamReminders.kt).
+// The time of day is set in Beállítások and arrives with the timetable (reminderTime).
 const EXAM_REMINDER_DAYS = 3;
-const EXAM_REMINDER_HOUR = 13;
 
 const DAY_NAMES = ["Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"];
 const DAY_SHORT = ["H", "K", "Sze", "Cs", "P", "Szo", "V"];
@@ -57,25 +57,6 @@ const examInput = document.getElementById("examInput");
 const examEmpty = document.getElementById("examEmpty");
 const examError = document.getElementById("examError");
 const saveExamBtn = document.getElementById("saveExam");
-const testExamBtn = document.getElementById("testExamNotification");
-const testExamResult = document.getElementById("testExamResult");
-
-// ===== Talking to Android =====
-const pending = new Map();
-let nextCallId = 0;
-
-function callNative(method, ...args) {
-	return new Promise(resolve => {
-		const callId = String(++nextCallId);
-		pending.set(callId, resolve);
-		Android[method](callId, ...args);
-	});
-}
-
-window.onNativeResult = (callId, result) => {
-	pending.get(String(callId))?.(result);
-	pending.delete(String(callId));
-};
 
 // In the app everything is stored by Android. In a desktop browser (Live Server)
 // the timetable is kept in localStorage instead, so the page can still be tried out.
@@ -108,9 +89,19 @@ const backend = inApp ? {
 	deleteFile: id => callNative("deleteFile", id),
 	saveExam: (date, period, subject, details) => callNative("saveExam", date, period, subject, details),
 	deleteExam: id => callNative("deleteExam", id),
-	testExamNotification: id => callNative("testExamNotification", id),
 } : {
-	getTimetable: async () => ({ lessons: readPreview(), fileCounts: {}, exams: readPreview(PREVIEW_EXAMS_KEY) }),
+	getTimetable: async () => ({
+		lessons: readPreview(),
+		fileCounts: {},
+		exams: readPreview(PREVIEW_EXAMS_KEY),
+		reminderTime: (() => {
+			try {
+				return localStorage.getItem("previewReminderTime") || "13:00";
+			} catch {
+				return "13:00";
+			}
+		})(),
+	}),
 	saveDay: async (day, lessons) => {
 		const others = readPreview().filter(lesson => lesson.day !== day);
 		return writePreview(PREVIEW_KEY, others.concat(lessons.map(l => ({ ...l, day }))));
@@ -120,7 +111,6 @@ const backend = inApp ? {
 		return writePreview(PREVIEW_EXAMS_KEY, others.concat({ id: Date.now(), date, period, subject, details }));
 	},
 	deleteExam: async id => writePreview(PREVIEW_EXAMS_KEY, readPreview(PREVIEW_EXAMS_KEY).filter(e => e.id !== id)),
-	testExamNotification: async () => false,
 	getFiles: async () => [],
 	pickFile: async () => ({ ok: false, error: "Fájlt csak az alkalmazásban lehet feltölteni." }),
 	openFile: async () => false,
@@ -204,8 +194,13 @@ function confirmTwice(button, onConfirm) {
 
 // ===== State =====
 let timetable = { lessons: [], fileCounts: {}, exams: [] };
-let weekStart = mondayOf(new Date());          // Monday of the week shown
-let selectedDay = (new Date().getDay() + 6) % 7; // 0 = Monday ... 6 = Sunday
+// calendar-page.html?date=2026-11-13 (the main page's exam card) opens that day
+const startDate = (() => {
+	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(new URLSearchParams(location.search).get("date") || "");
+	return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : new Date();
+})();
+let weekStart = mondayOf(startDate);              // Monday of the week shown
+let selectedDay = (startDate.getDay() + 6) % 7;  // 0 = Monday ... 6 = Sunday
 
 async function loadTimetable() {
 	timetable = (await backend.getTimetable()) || { lessons: [], fileCounts: {}, exams: [] };
@@ -508,20 +503,20 @@ function openDetails(lesson) {
 function reminderText(date) {
 	const now = new Date();
 	const days = [];
+	const [hours, minutes] = (timetable.reminderTime || "13:00").split(":").map(Number);
 	for (let daysBefore = EXAM_REMINDER_DAYS; daysBefore >= 1; daysBefore--) {
 		const at = addDays(date, -daysBefore);
-		at.setHours(EXAM_REMINDER_HOUR, 0, 0, 0);
+		at.setHours(hours, minutes, 0, 0);
 		if (at > now) days.push(`${MONTHS[at.getMonth()]} ${at.getDate()}.`);
 	}
 	if (!days.length) return "Nem lesz több emlékeztető, mert a dolgozatig már nincs hátra nap.";
-	return `Emlékeztető ${EXAM_REMINDER_HOUR}:00-kor: ${days.join(", ")}`;
+	return `Emlékeztető ${hours}:${String(minutes).padStart(2, "0")}-kor: ${days.join(", ")}`;
 }
 
 // Shows the exam (or the "add" button) for the open class; editing = show the text box
 function renderExam(editing = false) {
 	const exam = examAt(detailDate, detailLesson.period);
 	examError.hidden = true;
-	testExamResult.hidden = true;
 	examEmpty.hidden = editing || Boolean(exam);
 	examView.hidden = editing || !exam;
 	examForm.hidden = !editing;
@@ -548,20 +543,6 @@ saveExamBtn.addEventListener("click", async () => {
 	if (!saved) return showError(examError, "Nem sikerült menteni a dolgozatot.");
 	await loadTimetable();
 	renderExam();
-});
-
-testExamBtn.addEventListener("click", async () => {
-	const exam = examAt(detailDate, detailLesson.period);
-	if (!exam) return;
-	testExamBtn.disabled = true;
-	const sent = await backend.testExamNotification(exam.id);
-	testExamBtn.disabled = false;
-	testExamResult.hidden = false;
-	testExamResult.textContent = sent
-		? "Elküldve! Nézd meg az értesítéseket."
-		: inApp
-			? "Nem sikerült. Engedélyezd az értesítéseket, majd próbáld újra."
-			: "Az értesítés csak az alkalmazásban működik.";
 });
 
 confirmTwice(document.getElementById("deleteExam"), async () => {

@@ -1,5 +1,5 @@
 // Top bar + side menu shared by every page after login (main page, calendar).
-// Load it before the page's own script; the page scripts can use `inApp`.
+// Load it before the page's own script; the page scripts can use `inApp` and `callNative`.
 
 // The Android bridge only exists inside the app. In a desktop browser (Live Server)
 // the Android calls are skipped, so the pages still work for previewing.
@@ -10,6 +10,24 @@ if (inApp && !Android.isLoggedIn()) {
 } else if (inApp) {
 	document.getElementById("navUsername").textContent = Android.getUsername();
 }
+
+// ===== Talking to Android =====
+// Android answers later through window.onNativeResult; callNative turns that into a Promise
+const pending = new Map();
+let nextCallId = 0;
+
+function callNative(method, ...args) {
+	return new Promise(resolve => {
+		const callId = String(++nextCallId);
+		pending.set(callId, resolve);
+		Android[method](callId, ...args);
+	});
+}
+
+window.onNativeResult = (callId, result) => {
+	pending.get(String(callId))?.(result);
+	pending.delete(String(callId));
+};
 
 const menuToggle = document.getElementById("menuToggle");
 const sideMenu = document.getElementById("sideMenu");

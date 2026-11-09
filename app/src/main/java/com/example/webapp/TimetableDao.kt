@@ -46,6 +46,10 @@ abstract class TimetableDao {
     @Query("SELECT * FROM exams WHERE username = :username AND date = :date AND period = :period LIMIT 1")
     abstract suspend fun examAt(username: String, date: String, period: Int): Exam?
 
+    // Every user's exams (the reminders of all of them move when the reminder time changes)
+    @Query("SELECT * FROM exams")
+    abstract suspend fun allExams(): List<Exam>
+
     @Query("SELECT * FROM exams WHERE id = :id LIMIT 1")
     abstract suspend fun exam(id: Long): Exam?
 
