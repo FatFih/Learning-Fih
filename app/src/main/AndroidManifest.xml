@@ -21,7 +21,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Lets PDF / Word / PowerPoint apps open the uploaded files (read-only) -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.files"

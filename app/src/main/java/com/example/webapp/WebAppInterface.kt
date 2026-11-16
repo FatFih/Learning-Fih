@@ -25,9 +25,7 @@ class WebAppInterface(
     private val prefs = activity.getSharedPreferences("session", Context.MODE_PRIVATE)
     private val timetable = AppDatabase.get(activity).timetableDao()
 
-    // The file picker answers later, so remember who asked. Registered here because
-    // this object is created in MainActivity.onCreate (pickers must be registered that early).
-    private var pendingPick: Pair<String, String>? = null // callId, subject
+    private var pendingPick: Pair<String, String>? = null
     private val filePicker = activity.registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri -> onFilePicked(uri) }
@@ -58,7 +56,6 @@ class WebAppInterface(
     @JavascriptInterface
     fun isLoggedIn(): Boolean = prefs.getString("logged_in_username", null) != null
 
-    // The name as it was typed at registration (falls back to the login name)
     @JavascriptInterface
     fun getUsername(): String =
         prefs.getString("logged_in_display_name", null)?.takeIf { it.isNotBlank() }
@@ -78,10 +75,6 @@ class WebAppInterface(
         }
     }
 
-    // ===== Timetable (calendar page) =====
-
-    // Answers {"lessons": [{day, period, subject, room}], "fileCounts": {"subject key": n},
-    //          "exams": [{id, date, period, subject, details}], "reminderTime": "13:00"}
     @JavascriptInterface
     fun getTimetable(callId: String) {
         activity.lifecycleScope.launch {
@@ -121,7 +114,6 @@ class WebAppInterface(
         }
     }
 
-    // lessonsJson: [{period, subject, room}] - replaces everything on that day
     @JavascriptInterface
     fun saveDay(callId: String, day: Int, lessonsJson: String) {
         activity.lifecycleScope.launch {
@@ -149,10 +141,6 @@ class WebAppInterface(
         }
     }
 
-    // ===== Exams =====
-
-    // Adds the exam, or updates it if that class on that date already has one,
-    // and sets its reminder (3 days before)
     @JavascriptInterface
     fun saveExam(callId: String, date: String, period: Int, subject: String, details: String) {
         activity.lifecycleScope.launch {
@@ -177,7 +165,6 @@ class WebAppInterface(
                 exam.copy(id = timetable.insertExam(exam))
             }
             ExamReminders.schedule(activity, saved)
-            // The reminder needs notification permission (Android 13+)
             requestNotificationPermission()
             sendResult(callId, true)
         }
@@ -195,15 +182,11 @@ class WebAppInterface(
         }
     }
 
-    // ===== Settings (Beállítások page) =====
-
-    // Answers {"reminderTime": "13:00"}
     @JavascriptInterface
     fun getSettings(callId: String) {
         sendJson(callId, JSONObject().put("reminderTime", AppSettings.reminderTime(activity)).toString())
     }
 
-    // time = "HH:MM". Moves the reminders of every saved exam to the new time.
     @JavascriptInterface
     fun setReminderTime(callId: String, time: String) {
         activity.lifecycleScope.launch {
@@ -213,8 +196,6 @@ class WebAppInterface(
         }
     }
 
-    // Called by theme.js on every page: the status / navigation bar area follows the theme
-    // (dark icons on the light sky, light icons on the night sky)
     @JavascriptInterface
     fun setLightTheme(light: Boolean) {
         activity.runOnUiThread {
@@ -226,7 +207,6 @@ class WebAppInterface(
         }
     }
 
-    // Answers [{id, name, size}] for the files of one subject
     @JavascriptInterface
     fun getFiles(callId: String, subject: String) {
         activity.lifecycleScope.launch {
@@ -239,8 +219,6 @@ class WebAppInterface(
         }
     }
 
-    // Opens the system file picker (PDF, DOCX, PPT, PPTX only).
-    // Answers {"ok": true} / {"ok": false, "error": "..."} / {"ok": false, "cancelled": true}
     @JavascriptInterface
     fun pickFile(callId: String, subject: String) {
         activity.runOnUiThread {
@@ -275,7 +253,6 @@ class WebAppInterface(
         sendJson(callId, json.toString())
     }
 
-    // Opens the file in another app; false if no app on the phone can open it
     @JavascriptInterface
     fun openFile(callId: String, fileId: Long) {
         activity.lifecycleScope.launch {
@@ -298,7 +275,6 @@ class WebAppInterface(
 
     private fun sendResult(callId: String, success: Boolean) = sendJson(callId, success.toString())
 
-    // json must be a JSON value; JSON is valid JavaScript, so it can be passed in directly
     private fun sendJson(callId: String, json: String) {
         if (!callId.matches(Regex("[0-9]{1,10}"))) return
         webView.post {

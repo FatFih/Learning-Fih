@@ -15,7 +15,6 @@ import androidx.core.content.ContextCompat
 object NotificationHelper {
     private const val CHANNEL_ID = "dolgozat_reminders"
 
-    // Safe to call repeatedly - Android ignores it if the channel already exists
     fun createChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -26,7 +25,6 @@ object NotificationHelper {
         }
     }
 
-    // Android 13+ needs the POST_NOTIFICATIONS runtime permission, older versions don't
     fun hasPermission(context: Context): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(
@@ -36,7 +34,6 @@ object NotificationHelper {
     fun show(context: Context, id: Int, title: String, text: String) {
         if (!hasPermission(context)) return
 
-        // Tapping the notification opens the app
         val openApp = PendingIntent.getActivity(
             context, 0,
             Intent(context, MainActivity::class.java)

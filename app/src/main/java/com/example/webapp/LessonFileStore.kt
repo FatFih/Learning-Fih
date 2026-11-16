@@ -13,7 +13,6 @@ import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-// Copies picked files into the app's private storage and opens them in other apps
 object LessonFileStore {
     private const val MAX_SIZE = 25L * 1024 * 1024
     private const val TOO_BIG = "A fájl túl nagy (legfeljebb 25 MB)."
@@ -25,7 +24,6 @@ object LessonFileStore {
         "pptx" to "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     )
 
-    // What the system file picker is allowed to show
     val MIME_TYPES: Array<String> = MIME_BY_EXTENSION.values.toTypedArray()
 
     class ImportResult(val file: LessonFile? = null, val error: String? = null)
@@ -49,7 +47,6 @@ object LessonFileStore {
                 }
             }
 
-            // Some file managers ignore the picker's type filter, so check the extension too
             val extension = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
             val mimeType = MIME_BY_EXTENSION[extension]
                 ?: return@withContext ImportResult(error = "Csak PDF, DOCX, PPT vagy PPTX fájl tölthető fel.")
@@ -68,7 +65,6 @@ object LessonFileStore {
                             val read = input.read(buffer)
                             if (read < 0) break
                             copied += read
-                            // The reported size can be missing or wrong, so count while copying
                             if (copied > MAX_SIZE) throw TooBigException()
                             output.write(buffer, 0, read)
                         }
@@ -94,7 +90,6 @@ object LessonFileStore {
             }
         }
 
-    // Opens the file in an app that can show it (PDF reader, Word, PowerPoint...)
     fun open(context: Context, file: LessonFile): Boolean {
         val uri = FileProvider.getUriForFile(
             context, "${context.packageName}.files", File(dir(context), file.storedName)

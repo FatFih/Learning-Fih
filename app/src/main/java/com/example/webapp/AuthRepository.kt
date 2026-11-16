@@ -17,7 +17,6 @@ object AuthRepository {
         ) != -1L
     }
 
-    // Returns the user on success, null on a wrong username or password
     suspend fun login(dao: UserDao, username: String, password: String): User? {
         val normalizedUsername = normalizeUsername(username)
         if (normalizedUsername.isBlank() || password.isEmpty()) return null

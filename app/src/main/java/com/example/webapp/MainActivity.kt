@@ -20,8 +20,6 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var webView: WebView
 
-    // Your app lives in app/src/main/assets/ and is served from this fake https origin,
-    // so fetch(), localStorage, service workers etc. behave like on a real website.
     private val host = "appassets.androidplatform.net"
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -35,18 +33,15 @@ class MainActivity : ComponentActivity() {
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
             .build()
 
-        // Lets you inspect the page from desktop Chrome at chrome://inspect (debug builds only)
         if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
             WebView.setWebContentsDebuggingEnabled(true)
         }
 
-        // Same edge-to-edge behaviour on every Android version (Android 15 forces it anyway),
-        // so the keyboard handling below works the same everywhere
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         webView = WebView(this)
         val root = FrameLayout(this)
-        root.setBackgroundColor(0xFF050505.toInt()) // matches the page background
+        root.setBackgroundColor(0xFF050505.toInt())
         root.addView(
             webView,
             FrameLayout.LayoutParams(
@@ -56,9 +51,6 @@ class MainActivity : ComponentActivity() {
         )
         setContentView(root)
 
-        // Keep content out from under the system bars AND above the on-screen keyboard.
-        // The padding goes on the container (not the WebView), so the WebView really shrinks
-        // when the keyboard opens - that is what lets the page scroll the focused field into view.
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val space = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
@@ -69,7 +61,7 @@ class MainActivity : ComponentActivity() {
 
         webView.settings.apply {
             javaScriptEnabled = true
-            domStorageEnabled = true      // localStorage / sessionStorage
+            domStorageEnabled = true
             allowFileAccess = false
         }
         webView.addJavascriptInterface(WebAppInterface(this, webView), "Android")
@@ -79,7 +71,6 @@ class MainActivity : ComponentActivity() {
                 view: WebView, request: WebResourceRequest
             ): WebResourceResponse? = assetLoader.shouldInterceptRequest(request.url)
 
-            // Local pages stay in the app; external links open in the browser
             override fun shouldOverrideUrlLoading(
                 view: WebView, request: WebResourceRequest
             ): Boolean {
@@ -89,7 +80,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Back button goes back in web history, then exits
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (webView.canGoBack()) {

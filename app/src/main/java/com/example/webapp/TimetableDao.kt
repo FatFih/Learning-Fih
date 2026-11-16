@@ -18,7 +18,6 @@ abstract class TimetableDao {
     @Insert
     abstract suspend fun insertLessons(lessons: List<Lesson>)
 
-    // Saving a day replaces everything that was on it
     @Transaction
     open suspend fun replaceDay(username: String, day: Int, lessons: List<Lesson>) {
         deleteDay(username, day)
@@ -46,7 +45,6 @@ abstract class TimetableDao {
     @Query("SELECT * FROM exams WHERE username = :username AND date = :date AND period = :period LIMIT 1")
     abstract suspend fun examAt(username: String, date: String, period: Int): Exam?
 
-    // Every user's exams (the reminders of all of them move when the reminder time changes)
     @Query("SELECT * FROM exams")
     abstract suspend fun allExams(): List<Exam>
 

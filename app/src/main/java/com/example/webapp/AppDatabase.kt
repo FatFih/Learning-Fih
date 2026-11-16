@@ -13,7 +13,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun timetableDao(): TimetableDao
 
     companion object {
-        // v2 added displayName; existing users get their (lowercased) username as display name
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE users ADD COLUMN displayName TEXT NOT NULL DEFAULT ''")
@@ -21,7 +20,6 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        // v3 added the timetable and the uploaded files
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
@@ -38,7 +36,6 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        // v4 added exams
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
